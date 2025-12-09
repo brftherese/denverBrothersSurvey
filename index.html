@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provincial Chapter 2026 - Priory Report</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (for JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Icons (SVG Components) ---
+        const IconWrapper = ({ children, size = 20, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {children}
+            </svg>
+        );
+
+        const Shield = (props) => <IconWrapper {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></IconWrapper>;
+        const Activity = (props) => <IconWrapper {...props}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></IconWrapper>;
+        const Eye = (props) => <IconWrapper {...props}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></IconWrapper>;
+        const Heart = (props) => <IconWrapper {...props}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></IconWrapper>;
+        const BookOpen = (props) => <IconWrapper {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></IconWrapper>;
+        const Download = (props) => <IconWrapper {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></IconWrapper>;
+        const CheckCircle = (props) => <IconWrapper {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconWrapper>;
+        const Copy = (props) => <IconWrapper {...props}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></IconWrapper>;
+
+        // --- Main Component ---
+        const PrioryReportForm = () => {
+            const [formData, setFormData] = useState({
+                name: '',
+                responsibility: '',
+                ministry: '',
+                protectionTraining: '',
+                healthInsurance: '',
+                vision: '',
+                mission: '',
+                signsOfSpirit: '',
+                embodyCharism: '',
+                image: '',
+                difficulties: '',
+                projects: ''
+            });
+
+            const [showModal, setShowModal] = useState(false);
+            const [generatedReport, setGeneratedReport] = useState('');
+            const [copySuccess, setCopySuccess] = useState(false);
+            const [isPdfReady, setIsPdfReady] = useState(false);
+
+            // Check for jsPDF
+            useEffect(() => {
+                if (window.jspdf) {
+                    setIsPdfReady(true);
+                } else {
+                    // Fallback check
+                    const interval = setInterval(() => {
+                        if (window.jspdf) {
+                            setIsPdfReady(true);
+                            clearInterval(interval);
+                        }
+                    }, 500);
+                }
+            }, []);
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({ ...prev, [name]: value }));
+            };
+
+            const generateReportText = () => {
+                return `
+PROVINCIAL CHAPTER 2026 - PRIORY REPORT
+Submitted by: ${formData.name}
+
+--- PART 1: PERSONAL PROFILE ---
+Primary Responsibility: ${formData.responsibility}
+External Ministry: ${formData.ministry}
+
+Health & Safety:
+- Protection of Minors Training Up-to-date: ${formData.protectionTraining === 'yes' ? 'YES' : 'NO'}
+- Health Insurance/Care Active: ${formData.healthInsurance === 'yes' ? 'YES' : 'NO'}
+
+--- PART 2: VISION & MISSION ---
+1. Vision for Next 5 Years:
+${formData.vision}
+
+2. Mission & Charism (Viability):
+${formData.mission}
+
+--- PART 3: SPIRITUAL REALITY ---
+3. Signs of the Holy Spirit:
+${formData.signsOfSpirit}
+
+4. Embodying the Charism:
+${formData.embodyCharism}
+
+5. One Image of the Priory:
+${formData.image}
+
+--- PART 4: CHALLENGES & FUTURE ---
+6. Main Difficulties:
+${formData.difficulties}
+
+7. Projects & Resources:
+${formData.projects}
+                `.trim();
+            };
+
+            const downloadPDF = () => {
+                if (!window.jspdf) {
+                    alert("PDF Generator is still loading, please wait...");
+                    return;
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const margin = 20;
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const maxLineWidth = pageWidth - (margin * 2);
+                let y = 20;
+
+                const addText = (text, fontSize = 12, isBold = false) => {
+                    doc.setFont("helvetica", isBold ? "bold" : "normal");
+                    doc.setFontSize(fontSize);
+                    const lines = doc.splitTextToSize(text || " ", maxLineWidth);
+                    
+                    if (y + (lines.length * fontSize * 0.5) > doc.internal.pageSize.getHeight() - margin) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    
+                    doc.text(lines, margin, y);
+                    y += (lines.length * fontSize * 0.4) + 4;
+                };
+
+                const addSectionHeader = (title) => {
+                    y += 5;
+                    if (y > doc.internal.pageSize.getHeight() - margin) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    doc.setFillColor(240, 240, 240);
+                    doc.rect(margin, y - 6, maxLineWidth, 10, 'F');
+                    doc.setTextColor(0, 0, 0);
+                    addText(title, 12, true);
+                    y += 2;
+                };
+
+                // Title
+                doc.setFontSize(18);
+                doc.setFont("times", "bold");
+                doc.text("PROVINCIAL CHAPTER 2026", pageWidth / 2, y, { align: "center" });
+                y += 10;
+                doc.setFontSize(14);
+                doc.text("Priory Report Worksheet", pageWidth / 2, y, { align: "center" });
+                y += 15;
+
+                // Content
+                addText(`Submitted by: ${formData.name}`, 12, true);
+                y += 5;
+
+                addSectionHeader("PART 1: PERSONAL PROFILE & STATUS");
+                addText(`Primary Responsibility: ${formData.responsibility}`);
+                addText(`External Ministry: ${formData.ministry}`);
+                y += 3;
+                addText("Health & Safety Checks:", 11, true);
+                addText(`- Protection of Minors Training Up-to-date: ${formData.protectionTraining === 'yes' ? 'YES' : 'NO'}`);
+                addText(`- Health Insurance/Care Active: ${formData.healthInsurance === 'yes' ? 'YES' : 'NO'}`);
+
+                addSectionHeader("PART 2: VISION & MISSION");
+                addText("1. Vision for the Next 5 Years:", 11, true);
+                addText(formData.vision);
+                y += 3;
+                addText("2. Our Mission & Charism (Viability):", 11, true);
+                addText(formData.mission);
+
+                addSectionHeader("PART 3: SPIRITUAL REALITY");
+                addText("3. Signs of the Holy Spirit:", 11, true);
+                addText(formData.signsOfSpirit);
+                y += 3;
+                addText("4. Embodying the Charism:", 11, true);
+                addText(formData.embodyCharism);
+                y += 3;
+                addText("5. One Image of the Priory:", 11, true);
+                addText(formData.image);
+
+                addSectionHeader("PART 4: CHALLENGES & FUTURE");
+                addText("6. Main Difficulties:", 11, true);
+                addText(formData.difficulties);
+                y += 3;
+                addText("7. Projects & Resources:", 11, true);
+                addText(formData.projects);
+
+                const safeName = formData.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                doc.save(`Priory_Report_${safeName || 'Draft'}.pdf`);
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setGeneratedReport(generateReportText());
+                downloadPDF();
+                setShowModal(true);
+            };
+
+            const copyToClipboard = () => {
+                navigator.clipboard.writeText(generatedReport).then(() => {
+                    setCopySuccess(true);
+                    setTimeout(() => setCopySuccess(false), 2000);
+                });
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 font-sans text-slate-800">
+                    <div className="max-w-3xl mx-auto">
+                        {/* Header */}
+                        <div className="text-center mb-10">
+                            <h1 className="text-3xl font-serif font-bold text-slate-900 mb-2">Provincial Chapter 2026</h1>
+                            <p className="text-slate-600">Priory Report Worksheet</p>
+                            <div className="mt-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm inline-block mx-auto max-w-xl text-left">
+                                <p className="mb-2"><strong>Instructions:</strong></p>
+                                <ol className="list-decimal list-inside space-y-1">
+                                    <li>Fill out the reflection questions below.</li>
+                                    <li>Click <strong>"Download PDF"</strong> at the bottom.</li>
+                                    <li>Email the downloaded file to <strong>br.ftherese@gmail.com</strong>.</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-8">
+                            
+                            {/* Part 1 */}
+                            <section className="bg-white shadow-sm rounded-lg overflow-hidden border border-slate-200">
+                                <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                                    <div className="p-2 bg-blue-600 rounded-full text-white"><Shield size={20} /></div>
+                                    <h2 className="text-xl font-semibold text-slate-800">Part 1: Personal Profile & Status</h2>
+                                </div>
+                                <div className="p-6 space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                                        <input required type="text" name="name" value={formData.name} onChange={handleChange} className="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" placeholder="Br. Thomas Aquinas" />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Primary Responsibility (Internal)</label>
+                                            <input type="text" name="responsibility" value={formData.responsibility} onChange={handleChange} className="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" placeholder="e.g., Sacristan" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Main Ministry (External)</label>
+                                            <input type="text" name="ministry" value={formData.ministry} onChange={handleChange} className="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border" placeholder="e.g., Hospital Chaplaincy" />
+                                        </div>
+                                    </div>
+                                    <div className="bg-yellow-50 p-4 rounded-md border border-yellow-100 space-y-4">
+                                        <h3 className="font-medium text-yellow-800 flex items-center gap-2"><Activity size={18} /> Health & Safety Check</h3>
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-yellow-200 pb-3 last:border-0 last:pb-0">
+                                            <span className="text-sm text-yellow-900 mb-2 sm:mb-0">Are you up to date on Protection of Minors training?</span>
+                                            <div className="flex gap-4">
+                                                <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="protectionTraining" value="yes" onChange={handleChange} checked={formData.protectionTraining === 'yes'} className="text-blue-600" /><span className="text-sm">Yes</span></label>
+                                                <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="protectionTraining" value="no" onChange={handleChange} checked={formData.protectionTraining === 'no'} className="text-blue-600" /><span className="text-sm">No</span></label>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between">
+                                            <span className="text-sm text-yellow-900 mb-2 sm:mb-0">Do you have active health insurance/care?</span>
+                                            <div className="flex gap-4">
+                                                <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="healthInsurance" value="yes" onChange={handleChange} checked={formData.healthInsurance === 'yes'} className="text-blue-600" /><span className="text-sm">Yes</span></label>
+                                                <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="healthInsurance" value="no" onChange={handleChange} checked={formData.healthInsurance === 'no'} className="text-blue-600" /><span className="text-sm">No</span></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Part 2 */}
+                            <section className="bg-white shadow-sm rounded-lg overflow-hidden border border-slate-200">
+                                <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                                    <div className="p-2 bg-indigo-600 rounded-full text-white"><Eye size={20} /></div>
+                                    <h2 className="text-xl font-semibold text-slate-800">Part 2: Vision & Mission</h2>
+                                </div>
+                                <div className="p-6 space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">1. Vision for the Next 5 Years</label>
+                                        <div className="text-sm text-slate-500 mb-2 space-y-1">
+                                            <p>Do you have a specific vision or orientation for the priory for the next five years?</p>
+                                            <p>Does this vision take into account the possibility of new vocations?</p>
+                                        </div>
+                                        <textarea name="vision" rows="4" value={formData.vision} onChange={handleChange} className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"></textarea>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">2. Our Mission & Charism</label>
+                                        <div className="text-sm text-slate-500 mb-2 space-y-1">
+                                            <p>How does our current mission reflect our Order's charism?</p>
+                                            <p>Does the mission have a future—will it still exist/be relevant in 5 years?</p>
+                                        </div>
+                                        <textarea name="mission" rows="4" value={formData.mission} onChange={handleChange} className="w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"></textarea>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Part 3 */}
+                            <section className="bg-white shadow-sm rounded-lg overflow-hidden border border-slate-200">
+                                <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                                    <div className="p-2 bg-rose-600 rounded-full text-white"><Heart size={20} /></div>
+                                    <h2 className="text-xl font-semibold text-slate-800">Part 3: Spiritual Reality</h2>
+                                </div>
+                                <div className="p-6 space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">3. Signs of the Holy Spirit</label>
+                                        <div className="text-sm text-slate-500 mb-2 space-y-1">
+                                            <p>What signs of the Holy Spirit do you see in our environment today?</p>
+                                            <p>Do you feel our current mission is responding to the call of the Holy Spirit right now?</p>
+                                        </div>
+                                        <textarea name="signsOfSpirit" rows="4" value={formData.signsOfSpirit} onChange={handleChange} className="w-full rounded-md border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 border"></textarea>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">4. Embodying the Charism</label>
+                                        <p className="text-sm text-slate-500 mb-2">Which specific aspect of our charism do you feel we need to embody <em>more</em> here and now?</p>
+                                        <textarea name="embodyCharism" rows="3" value={formData.embodyCharism} onChange={handleChange} className="w-full rounded-md border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 border"></textarea>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">5. One Image</label>
+                                        <p className="text-sm text-slate-500 mb-2">If you had to choose one word or image to describe our priory as it is currently (e.g., "hearth of light", "school of love", "source of truth"), what would it be?</p>
+                                        <input type="text" name="image" value={formData.image} onChange={handleChange} className="w-full rounded-md border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 p-2 border" />
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Part 4 */}
+                            <section className="bg-white shadow-sm rounded-lg overflow-hidden border border-slate-200">
+                                <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                                    <div className="p-2 bg-emerald-600 rounded-full text-white"><BookOpen size={20} /></div>
+                                    <h2 className="text-xl font-semibold text-slate-800">Part 4: Challenges & Future</h2>
+                                </div>
+                                <div className="p-6 space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">6. Main Difficulties</label>
+                                        <div className="text-sm text-slate-500 mb-2 space-y-1">
+                                            <p>What are the principal difficulties the priory is facing?</p>
+                                            <p className="italic text-xs">(Please consider: common life, apostolates, the mission itself, lack of brothers, aging, etc.)</p>
+                                        </div>
+                                        <textarea name="difficulties" rows="4" value={formData.difficulties} onChange={handleChange} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 p-2 border"></textarea>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">7. Projects & Resources</label>
+                                        <div className="text-sm text-slate-500 mb-2 space-y-1">
+                                            <p>Financial Situation (2023-2025): What is our main source of income now and in the future?</p>
+                                            <p>Are there any specific projects (pastoral or physical) you believe the priory should undertake?</p>
+                                        </div>
+                                        <textarea name="projects" rows="4" value={formData.projects} onChange={handleChange} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 p-2 border"></textarea>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Footer */}
+                            <div className="flex flex-col items-center gap-4 py-6">
+                                <button type="submit" disabled={!isPdfReady} className={`flex items-center gap-2 text-white px-8 py-4 rounded-lg transition-colors shadow-lg font-semibold text-lg ${isPdfReady ? 'bg-slate-900 hover:bg-slate-800' : 'bg-slate-400 cursor-not-allowed'}`}>
+                                    <Download size={20} />
+                                    {isPdfReady ? "Download PDF Report" : "Loading..."}
+                                </button>
+                                <p className="text-sm text-slate-500 text-center max-w-md">Your responses are private and saved only to the PDF file on your device.</p>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Modal */}
+                    {showModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+                                <div className="p-6 border-b border-slate-100 flex items-start justify-between">
+                                    <div>
+                                        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                            <CheckCircle className="text-green-500" />
+                                            PDF Downloaded Successfully
+                                        </h3>
+                                        <p className="text-slate-500 text-sm mt-1">Please locate the file in your "Downloads" folder and email it to <strong>br.ftherese@gmail.com</strong>.</p>
+                                    </div>
+                                    <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+                                </div>
+                                <div className="p-6 overflow-y-auto bg-slate-50">
+                                    <p className="text-sm font-semibold text-slate-700 mb-2">Preview of your answers:</p>
+                                    <div className="bg-white border border-slate-200 rounded p-4 font-mono text-xs whitespace-pre-wrap text-slate-700 max-h-40 overflow-y-auto">{generatedReport}</div>
+                                </div>
+                                <div className="p-6 border-t border-slate-100 bg-white rounded-b-xl flex justify-end items-center gap-3">
+                                    <button onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md transition-colors">Close</button>
+                                    <button onClick={copyToClipboard} className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors text-white ${copySuccess ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
+                                        {copySuccess ? <CheckCircle size={18} /> : <Copy size={18} />}
+                                        {copySuccess ? 'Copied Text' : 'Copy Text'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<PrioryReportForm />);
+    </script>
+</body>
+</html>
